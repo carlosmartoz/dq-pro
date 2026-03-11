@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 type Mission = {
   id: string
@@ -147,23 +155,23 @@ export function App() {
 
   return (
     <div className="min-h-svh bg-background px-4 py-8 text-foreground">
-      <div className="mx-auto flex max-w-md flex-col gap-5">
-        <header className="space-y-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <h1 className="text-xl font-semibold">Daily Missions</h1>
-            <span className="text-xs text-muted-foreground">
-              {formattedDate}
-            </span>
-          </div>
-        </header>
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader className="flex items-baseline justify-between gap-2">
+          <CardTitle className="text-xl font-bold">Daily Quest</CardTitle>
 
-        <main className="space-y-4 rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur">
-          <section className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-medium tracking-[0.16em] uppercase">
-                Today&apos;s missions
+          <CardDescription className="text-sm">{formattedDate}</CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground">
+                Today&apos;s Quests
               </span>
-              <span>{progressLabel}</span>
+
+              <span className="text-xs text-muted-foreground">
+                {progressLabel}
+              </span>
             </div>
 
             <form
@@ -187,7 +195,7 @@ export function App() {
                 Add
               </Button>
             </form>
-          </section>
+          </div>
 
           <section className="space-y-2">
             {missions.length === 0 ? (
@@ -233,16 +241,14 @@ export function App() {
               </ul>
             )}
           </section>
+        </CardContent>
 
-          <footer className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
-            <span>Lists reset automatically every new day.</span>
-            <span className="hidden sm:inline">
-              Press <kbd className="rounded bg-muted px-1 text-[10px]">d</kbd>{" "}
-              to toggle dark mode.
-            </span>
-          </footer>
-        </main>
-      </div>
+        <CardFooter>
+          <span className="text-xs text-muted-foreground">
+            Lists reset automatically every new day.
+          </span>
+        </CardFooter>
+      </Card>
     </div>
   )
 }
