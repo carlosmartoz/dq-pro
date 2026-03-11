@@ -90,7 +90,7 @@ export function App() {
 
   const completedCount = useMemo(
     () => missions.filter((mission) => mission.completed).length,
-    [missions],
+    [missions]
   )
 
   const handleAddMission = () => {
@@ -114,7 +114,7 @@ export function App() {
               ...mission,
               completed: !mission.completed,
             }
-          : mission,
+          : mission
       ),
     }))
   }
@@ -149,23 +149,18 @@ export function App() {
     <div className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto flex max-w-md flex-col gap-5">
         <header className="space-y-1">
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
-            Daily dashboard
-          </p>
           <div className="flex items-baseline justify-between gap-2">
             <h1 className="text-xl font-semibold">Daily Missions</h1>
-            <span className="text-xs text-muted-foreground">{formattedDate}</span>
+            <span className="text-xs text-muted-foreground">
+              {formattedDate}
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Define small, focused missions for today. They will reset automatically
-            tomorrow.
-          </p>
         </header>
 
         <main className="space-y-4 rounded-2xl border bg-card/60 p-4 shadow-sm backdrop-blur">
           <section className="space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-medium uppercase tracking-[0.16em]">
+              <span className="font-medium tracking-[0.16em] uppercase">
                 Today&apos;s missions
               </span>
               <span>{progressLabel}</span>
@@ -210,14 +205,16 @@ export function App() {
                     <button
                       type="button"
                       onClick={() => handleToggleMission(mission.id)}
-                      className="flex h-4 w-4 items-center justify-center rounded border border-input bg-background text-xs text-muted-foreground ring-offset-background transition hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex h-4 w-4 items-center justify-center rounded border border-input bg-background text-xs text-muted-foreground ring-offset-background transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                       aria-pressed={mission.completed}
                     >
                       {mission.completed ? "✓" : ""}
                     </button>
                     <span
                       className={`flex-1 wrap-break-word ${
-                        mission.completed ? "text-muted-foreground line-through" : ""
+                        mission.completed
+                          ? "text-muted-foreground line-through"
+                          : ""
                       }`}
                     >
                       {mission.title}
@@ -240,8 +237,8 @@ export function App() {
           <footer className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
             <span>Lists reset automatically every new day.</span>
             <span className="hidden sm:inline">
-              Press <kbd className="rounded bg-muted px-1 text-[10px]">d</kbd> to
-              toggle dark mode.
+              Press <kbd className="rounded bg-muted px-1 text-[10px]">d</kbd>{" "}
+              to toggle dark mode.
             </span>
           </footer>
         </main>
