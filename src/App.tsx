@@ -1,92 +1,89 @@
-import { useEffect, useMemo, useState } from "react"
-
-import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardContent,
-  CardDescription,
+  CardTitle,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardContent,
+  CardDescription,
 } from "@/components/ui/card"
-
-type Mission = {
-  id: string
-  title: string
-  completed: boolean
-}
-
-const STORAGE_KEY = "daily-missions:v1"
-
-function getTodayId() {
-  return new Date().toISOString().slice(0, 10)
-}
+import type { Quest } from "@/types/quest"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { getTodayId } from "@/lib/get-today-id"
+import { STORAGE_KEY } from "@/consts/storage-key"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useEffect, useMemo, useState } from "react"
+import { Field, FieldGroup } from "@/components/ui/field"
+import { ButtonGroup } from "@/components/ui/button-group"
+import { Trash2 } from "lucide-react"
 
 export function App() {
-  const [{ missions, dayId }, setState] = useState(() => {
+  const [{ quests, dayId }, setState] = useState(() => {
     const today = getTodayId()
 
     if (typeof window === "undefined") {
       return {
         dayId: today,
-        missions: [] as Mission[],
+        quests: [] as Quest[],
       }
     }
 
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY)
+
       if (!raw) {
         return {
           dayId: today,
-          missions: [] as Mission[],
+          quests: [] as Quest[],
         }
       }
 
       const parsed = JSON.parse(raw) as {
         dayId?: string
-        missions?: Mission[]
+        quests?: Quest[]
       }
 
-      if (!parsed || !Array.isArray(parsed.missions)) {
+      if (!parsed || !Array.isArray(parsed.quests)) {
         return {
           dayId: today,
-          missions: [] as Mission[],
+          quests: [] as Quest[],
         }
       }
 
-      const baseMissions: Mission[] = parsed.missions.map((mission) => ({
-        id: String(mission.id),
-        title: String(mission.title),
-        completed: Boolean(mission.completed),
+      const baseQuests: Quest[] = parsed.quests.map((quest) => ({
+        id: String(quest.id),
+        title: String(quest.title),
+        completed: Boolean(quest.completed),
       }))
 
       if (parsed.dayId === today) {
         return {
           dayId: today,
-          missions: baseMissions,
+          quests: baseQuests,
         }
       }
 
       return {
         dayId: today,
-        missions: baseMissions.map((mission) => ({
-          ...mission,
+        quests: baseQuests.map((quest) => ({
+          ...quest,
           completed: false,
         })),
       }
     } catch {
       return {
         dayId: today,
-        missions: [] as Mission[],
+        quests: [] as Quest[],
       }
     }
   })
+
   const [newTitle, setNewTitle] = useState("")
 
   useEffect(() => {
     const state = {
       dayId,
-      missions,
+      quests,
     }
 
     try {
@@ -94,35 +91,38 @@ export function App() {
     } catch {
       // storage might be unavailable; fail silently
     }
-  }, [dayId, missions])
+  }, [dayId, quests])
 
   const completedCount = useMemo(
-    () => missions.filter((mission) => mission.completed).length,
-    [missions]
+    () => quests.filter((quest) => quest.completed).length,
+    [quests]
   )
 
   const handleAddMission = () => {
     const title = newTitle.trim()
+
     if (!title) return
 
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
     setState((prev) => ({
       ...prev,
-      missions: [...prev.missions, { id, title, completed: false }],
+      quests: [...prev.quests, { id, title, completed: false }],
     }))
+
     setNewTitle("")
   }
 
   const handleToggleMission = (id: string) => {
     setState((prev) => ({
       ...prev,
-      missions: prev.missions.map((mission) =>
-        mission.id === id
+      quests: prev.quests.map((quest) =>
+        quest.id === id
           ? {
-              ...mission,
-              completed: !mission.completed,
+              ...quest,
+              completed: !quest.completed,
             }
-          : mission
+          : quest
       ),
     }))
   }
@@ -130,22 +130,62 @@ export function App() {
   const handleRemoveMission = (id: string) => {
     setState((prev) => ({
       ...prev,
-      missions: prev.missions.filter((mission) => mission.id !== id),
+      quests: prev.quests.filter((quest) => quest.id !== id),
     }))
   }
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault()
+
     handleAddMission()
   }
 
   const progressLabel =
-    missions.length === 0
-      ? "No missions yet"
-      : `${completedCount} / ${missions.length} completed`
+    quests.length === 0
+      ? "No quests yet"
+      : `${completedCount} / ${quests.length} completed`
+
+  const [msUntilReset, setMsUntilReset] = useState<number>(() => {
+    const now = new Date()
+
+    const next = new Date(now)
+
+    next.setHours(24, 0, 0, 0)
+
+    return Math.max(0, next.getTime() - now.getTime())
+  })
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const now = new Date()
+
+      const next = new Date(now)
+
+      next.setHours(24, 0, 0, 0)
+
+      setMsUntilReset(Math.max(0, next.getTime() - now.getTime()))
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const nextResetLabel = useMemo(() => {
+    const totalSeconds = Math.floor(msUntilReset / 1000)
+
+    const hours = Math.floor(totalSeconds / 3600)
+
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+
+    const seconds = totalSeconds % 60
+
+    const pad2 = (value: number) => String(value).padStart(2, "0")
+
+    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
+  }, [msUntilReset])
 
   const formattedDate = useMemo(() => {
     const date = new Date(dayId)
+
     return date.toLocaleDateString(undefined, {
       weekday: "short",
       month: "short",
@@ -154,99 +194,101 @@ export function App() {
   }, [dayId])
 
   return (
-    <div className="min-h-svh bg-background px-4 py-8 text-foreground">
-      <Card className="mx-auto w-full max-w-md">
-        <CardHeader className="flex items-baseline justify-between gap-2">
-          <CardTitle className="text-xl font-bold">Daily Quest</CardTitle>
+    <div className="min-h-svh bg-background px-4 py-8">
+      <Card className="mx-auto w-full max-w-md gap-6">
+        <CardHeader className="m-0 flex flex-col gap-3">
+          <div className="flex w-full items-baseline justify-between gap-2">
+            <CardTitle className="text-xl font-bold">Daily Quest</CardTitle>
 
-          <CardDescription className="text-sm">{formattedDate}</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                Today&apos;s Quests
-              </span>
-
-              <span className="text-xs text-muted-foreground">
-                {progressLabel}
-              </span>
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              className="flex gap-2 rounded-xl border bg-background/40 px-3 py-2.5"
-            >
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(event) => setNewTitle(event.target.value)}
-                placeholder="Add a mission for today"
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                autoComplete="off"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!newTitle.trim()}
-                className="shrink-0"
-              >
-                Add
-              </Button>
-            </form>
+            <CardDescription className="text-sm">
+              {formattedDate}
+            </CardDescription>
           </div>
 
-          <section className="space-y-2">
-            {missions.length === 0 ? (
-              <p className="rounded-xl border border-dashed bg-muted/40 px-3 py-3 text-xs text-muted-foreground">
-                No missions yet. Start by adding 2–5 simple actions you want to
+          <form onSubmit={handleSubmit} className="w-full">
+            <FieldGroup>
+              <Field>
+                <ButtonGroup>
+                  <Input
+                    required
+                    value={newTitle}
+                    autoComplete="off"
+                    id="input-button-group"
+                    placeholder="Add a quest for today"
+                    className="text-sm! placeholder:text-sm"
+                    onChange={(event) => setNewTitle(event.target.value)}
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="cursor-pointer text-sm transition-all duration-300"
+                  >
+                    Add
+                  </Button>
+                </ButtonGroup>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardHeader>
+
+        <CardContent className="m-0">
+          <div className="flex flex-col gap-2">
+            <p className="text-base text-foreground">{progressLabel}</p>
+
+            {quests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No quests yet. Start by adding 2–5 simple actions you want to
                 complete today.
               </p>
             ) : (
-              <ul className="space-y-1.5">
-                {missions.map((mission) => (
+              <ul className="flex flex-col gap-3">
+                {quests.map((quest) => (
                   <li
-                    key={mission.id}
-                    className="group flex items-center gap-3 rounded-xl border bg-background/60 px-3 py-2.5 text-sm transition-colors"
+                    key={quest.id}
+                    className="flex h-10 items-center gap-4 border border-input bg-input/30 px-2"
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMission(mission.id)}
-                      className="flex h-4 w-4 items-center justify-center rounded border border-input bg-background text-xs text-muted-foreground ring-offset-background transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                      aria-pressed={mission.completed}
-                    >
-                      {mission.completed ? "✓" : ""}
-                    </button>
-                    <span
-                      className={`flex-1 wrap-break-word ${
-                        mission.completed
+                    <Checkbox
+                      checked={quest.completed}
+                      id={`row-${quest.id}-checkbox`}
+                      name={`row-${quest.id}-checkbox`}
+                      onCheckedChange={() => handleToggleMission(quest.id)}
+                    />
+
+                    <p
+                      className={`flex-1 text-sm transition-all duration-300 ${
+                        quest.completed
                           ? "text-muted-foreground line-through"
-                          : ""
+                          : "text-foreground"
                       }`}
                     >
-                      {mission.title}
-                    </span>
+                      {quest.title}
+                    </p>
+
                     <Button
+                      size="icon"
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveMission(mission.id)}
-                      className="h-7 w-7 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveMission(quest.id)}
+                      className="w-auto cursor-pointer p-0 text-foreground transition-all duration-300 hover:text-destructive"
                     >
-                      ✕
+                      <Trash2 />
                     </Button>
                   </li>
                 ))}
               </ul>
             )}
-          </section>
+          </div>
         </CardContent>
 
-        <CardFooter>
-          <span className="text-xs text-muted-foreground">
+        <CardFooter className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">
             Lists reset automatically every new day.
-          </span>
+          </p>
+
+          <p className="text-sm text-foreground">
+            Next reset: {nextResetLabel}
+          </p>
         </CardFooter>
       </Card>
     </div>
