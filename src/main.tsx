@@ -1,14 +1,14 @@
+import "@/styles/main.css"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-
-import "./index.css"
-import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { DailyQuestClient } from "@/features/daily-quest/daily-quest-client"
+
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
+      <DailyQuestClient />
     </ThemeProvider>
   </StrictMode>
 )
