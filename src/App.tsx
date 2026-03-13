@@ -238,8 +238,7 @@ export function App() {
 
             {quests.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No quests yet. Start by adding 2–5 simple actions you want to
-                complete today.
+                Start by adding 2–5 simple actions you want to complete today.
               </p>
             ) : (
               <ul className="flex flex-col gap-3">
